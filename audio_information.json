@@ -1,0 +1,8 @@
+{
+  "sampling_rate": 44100,
+  "sample_width": 2,
+  "blocksize": 11000,
+  "channels": 1,
+  "amplitude": 1,
+  "record_duration": 3
+}

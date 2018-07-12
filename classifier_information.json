@@ -1,0 +1,30 @@
+{
+  "input_layer": {
+    "width":143000,
+    "height": 1,
+    "depth": 1,
+    "data_format": "float32"
+  },
+  "convolution_layer": {
+    "kernel_width": 4,
+    "kernel_height": 1,
+    "filters": 3,
+    "padding": "same",
+    "activation": "relu",
+    "stride": 2
+  },
+  "pool_layer": {
+    "kernel_width": 2,
+    "kernel_height": 1,
+    "stride": 2,
+    "padding": "valid"
+  },
+  "dense_layer": {
+    "units": 512,
+    "dropout": 0.4,
+    "activation": "relu"
+  },
+  "output_layer":{
+    "classes": 2
+  }
+}
