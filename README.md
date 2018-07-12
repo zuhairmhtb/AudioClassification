@@ -29,6 +29,7 @@ o. Train Steps: 80
 p. Train epoch/iteration: 50
 
 3. Files, Folders and their Functions:
+
 a. MyStreamer.py: Creates a GUI using PyQt5 and Matplotlib in order to display output for audio stream, classification and in order to provide an interface to interact with the software. The audio stream is recorded using 'sounddevice' module of python. The interface displays 'Audio waveform for total input stream', 'Audio waveform for current audio input sample', 'Spectogram for current audio sample', 'DFT Output Graph for Frequency Vs Amplitude with identification of Audio Note with highest Frequency', 'Buttons for controlling Audio Stream', 'Information about Audio Settings' and 'Classification Output for current audio sample'.
 
 b. MyManager.py: A threaded background object that receives each audio input sample from queue and creates blocks of Audio samples with specified duration(3 seconds) in order to save the output as a numpy array and perform classification using a pretrained CNN. It finaly displays output of the prediction and saves the audio samples in the following directory structure:
@@ -38,6 +39,7 @@ b. MyManager.py: A threaded background object that receives each audio input sam
           -- data.npy (Audio data in nupy format)
           -- audio.wav (Audio sample)
           -- spectogram.npy (Spectogram of the audio data-Obsolete)
+          
 c. DatasetManager.py: Manages the input dataset for the Classifier. It collects input data as URL from 'Train' and 'Test' directoris of the input dataset for a specific Classifier. As for example, if the training directory contains a folder named 'Sound' for which a network needs to be created and trained then the name of the folder should be mentioned in 'classifier_name' variable of Classifier.py. The audio input data present inside directories and sub-directories of the folder are then gathered for 'Correct' output type of the classifier and rest of the dataset are considered as 'Incorrect' output of the classifier. The network is then trained accordingly.
 
 d. Classifier.py: Creates/Loads a Convolutional Neural Network for classification of audio input signals. The model for each classifier is saved in 'networks' directory.
@@ -50,6 +52,7 @@ e. dataset(Directory): Contains input dataset for Train, Predicted and Test type
         -- audio.wav (The audio sample which is saved)
         -- data.npy (The numpy array of the input data)
         -- spectogram.py (Spectogram of the input data-Obsolete: is now performed inside classifiers)
+        
  f. networks(Directory): Contains saved model for each trained classifier. The folder name of each model is the type of data(in dataset directory) for which binary classification was performed). It contains two child directories (cnn and rnn) inside which the models are saved. The directory structure is as follows:
   -- cnn/ (Root directory)
     -- ModelName/ (Model directory-TensorFlow)
