@@ -12,13 +12,13 @@ class Utility:
 class DatasetCollector:
     def __init__(self, data_name):
         self.data_folder = data_name
-        self.BASE_DIR = 'D:\\thesis\\ConvNet\\MyNet\\temp\\'
-        self.dataset_base_dir = self.BASE_DIR + 'dataset\\'
-        self.network_base_dir = self.BASE_DIR + 'networks\\'
-        self.train_dataset_dir = self.dataset_base_dir + "train\\"
-        self.test_dataset_dir = self.dataset_base_dir + "test\\"
-        self.classifier_information_path = self.BASE_DIR + "classifier_information.json"
-        self.audio_information_path = self.BASE_DIR + "audio_information.json"
+        self.BASE_DIR = os.getcwd()
+        self.dataset_base_dir = os.path.join(self.BASE_DIR, 'dataset')
+        self.network_base_dir = os.path.join(self.BASE_DIR, 'networks')
+        self.train_dataset_dir = os.path.join(self.dataset_base_dir, "train")
+        self.test_dataset_dir = os.path.join(self.dataset_base_dir, "test")
+        self.classifier_information_path = os.path.join(self.BASE_DIR, "classifier_information.json")
+        self.audio_information_path = os.path.join(self.BASE_DIR, "audio_information.json")
         self.raw_data_file = "data.npy"
         self.fourier_data_file = "spectogram.npy"
         self.all_data_files = ["data.npy", "spectogram.npy"]

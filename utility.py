@@ -5,7 +5,7 @@ import scipy.io.wavfile as wav
 import sounddevice as sd
 class Utility:
     def __init__(self):
-        self.BASE_DIR = 'D:\\thesis\\ConvNet\\MyNet\\temp\\'
+        self.BASE_DIR = os.getcwd()
 
     def remove_all_file(self, name, folder):
         for the_file in os.listdir(folder):
@@ -51,7 +51,7 @@ class Utility:
             file_path = os.path.join(folder, file)
             if os.path.isfile(file_path) and data_filename in file:
                     data = np.load(file_path)
-                    wav.write(folder + "\\" +  data_filename + ".wav", sr, data)
+                    wav.write(os.path.join(folder, data_filename + ".wav"), sr, data)
             elif os.path.isdir(file_path):
                 print("Converting files of directory: " + file_path)
                 self.convert_to_wave(file_path, data_filename, sr)
@@ -74,12 +74,12 @@ class Utility:
                 index = int(input("Choose directory: Base dir: " + label_data_base_dir))
                 if 0 <= index < len(inp_map):
                     dir_name = inp_map[index]
-                    old_dir_path = raw_data_dir + "\\"
-                    new_dir_path = label_data_base_dir + dir_name + "\\"
+                    old_dir_path = raw_data_dir
+                    new_dir_path = os.path.join(label_data_base_dir, dir_name)
                     print("Transferring data from " + old_dir_path + " to " + new_dir_path)
                     shutil.move(old_dir_path, new_dir_path)
                 elif index == -1:
-                    shutil.rmtree(raw_data_dir + "\\")
+                    shutil.rmtree(raw_data_dir)
             elif os.path.isdir(file_path):
                 self.label_training_data(file_path, label_data_base_dir, np_data_name, inp_map)
 
@@ -91,10 +91,10 @@ class Utility:
 
 if __name__ == "__main__":
     util = Utility()
-    base_dir = 'D:\\thesis\\ConvNet\\MyNet\\temp\\dataset\\predicted\\other\\'
-    input_map = ["sound\\noise", "music", "talk", "sound\\voice"]
+    base_dir = os.path.join(os.getcwd(), "dataset", "predicted", "other")
+    input_map = [os.path.join("sound", "noise"), "music", "talk", os.path.join("sound", "voice")]
     #data = np.load(base_dir+'data.npy', allow_pickle=True)
     #util.create_spectogram(data)
     #util.convert_to_wave(base_dir, "data", 44100)
     #util.rename(base_dir, "sepctogram.npy", "spectogram.npy")
-    util.label_training_data(base_dir, "D:\\thesis\\ConvNet\\MyNet\\temp\\dataset\\test\\", "data.npy", input_map)
+    util.label_training_data(base_dir, os.path.join(os.getcwd(), "dataset", "teset"), "data.npy", input_map)

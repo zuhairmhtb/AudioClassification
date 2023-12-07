@@ -22,7 +22,7 @@ class StreamManager:
     def log(self, text):
         print(text)
     def run(self):
-        folder_name = str(int(round(time.time() * 1000))) + "\\"
+        folder_name = str(int(round(time.time() * 1000)))
 
         if len(self.audio_queue) > 0:
             merged_data = self.audio_queue[0]
@@ -42,7 +42,7 @@ class StreamManager:
                 pred = "Talking"
             prob = "{0:.2f}%".format((100 * np.amax(prediction[0]['probabilities'])))
             print("PREDICTION: " + str(pred))
-            folder_url = self.predicted_output_dir + str(pred) + "\\" + folder_name
+            folder_url = os.path.join(self.predicted_output_dir + str(pred), folder_name)
             self.mkdir(folder_url)
             #np.save(folder_url+'fourier', fourier_data)
             #np.save(folder_url+'freq', freq)

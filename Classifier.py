@@ -3,8 +3,15 @@ import sounddevice as sd
 from tensorflow.python.ops import rnn, rnn_cell
 import numpy as np
 import os
-from MyNet.temp.DatasetManager import DatasetCollector
-tf.logging.set_verbosity(tf.logging.INFO)
+from DatasetManager import DatasetCollector
+
+#tf.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_v2_behavior()
+
+
+
+
+#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 class Classifier:
     def __init__(self, classifier_name):
         self.classifier_type = "cnn"
@@ -15,14 +22,14 @@ class Classifier:
         self.inp_chan = self.dm.classifier_information["input_layer"]["depth"]
         self.conv_filters = self.dm.classifier_information["convolution_layer"]["filters"]
         self.conv_padding = self.dm.classifier_information["convolution_layer"]["padding"]
-        self.conv_activation = tf.nn.relu
+        self.conv_activation = tf.compat.v1.nn.relu
         self.conv_stride = self.dm.classifier_information["convolution_layer"]["stride"]
         self.conv_kernel_width = self.dm.classifier_information["convolution_layer"]["kernel_width"]
         self.pool_size = self.dm.classifier_information["pool_layer"]["kernel_width"]
         self.pool_stride = self.dm.classifier_information["pool_layer"]["stride"]
         self.pool_padding = self.dm.classifier_information["pool_layer"]["padding"]
         self.dense_units = self.dm.classifier_information["dense_layer"]["units"]
-        self.dense_activation = tf.nn.relu
+        self.dense_activation = tf.compat.v1.nn.relu
         self.dense_dropout = self.dm.classifier_information["dense_layer"]["dropout"]
         self.output_classes = self.dm.classifier_information["output_layer"]["classes"]
 
@@ -31,9 +38,9 @@ class Classifier:
         self.prediction_probability_name = "softmax_tensor"
         self.input_feature_tag = "x"
         if self.classifier_type == "rnn":
-            self.model_dir = self.dm.network_base_dir + "rnn\\" + self.classifier_name + "\\"
+            self.model_dir = os.path.join(self.dm.network_base_dir, "rnn", self.classifier_name)
         else:
-            self.model_dir = self.dm.network_base_dir + "cnn\\" + self.classifier_name + "\\"
+            self.model_dir = os.path.join(self.dm.network_base_dir, "cnn", self.classifier_name)
         self.logger = self.get_logger()
         self.batch_size = 200
         self.train_epochs = None
@@ -54,32 +61,32 @@ class Classifier:
         self.rnn_chunk_size = int(self.inp_w/self.rnn_chunks)
         self.rnn_size = int(self.inp_w/self.rnn_chunks)
         print("Chunk size: " + str(self.rnn_chunk_size))
-        self.x_rnn = tf.placeholder('float', [None, self.rnn_chunks, self.rnn_chunk_size])
-        self.y_rnn = tf.placeholder('int32')
+        self.x_rnn = tf.compat.v1.placeholder('float', [None, self.rnn_chunks, self.rnn_chunk_size])
+        self.y_rnn = tf.compat.v1.placeholder('int32')
 
         print("Initiating weights and variables of the RNN")
-        self.rnn_layer = {'weights': tf.Variable(tf.random_normal([self.rnn_size, self.output_classes])),
-                     'biases': tf.Variable(tf.random_normal([self.output_classes]))}
+        self.rnn_layer = {'weights': tf.compat.v1.Variable(tf.compat.v1.random_normal([self.rnn_size, self.output_classes])),
+                     'biases': tf.compat.v1.Variable(tf.compat.v1.random_normal([self.output_classes]))}
 
 
 
     def get_logger(self):
         iterations = 10
         tensors_to_log = {self.prediction_probability_key: self.prediction_probability_name}
-        return tf.train.LoggingTensorHook(
+        return tf.compat.v1.estimator.LoggingTensorHook(
             tensors=tensors_to_log, every_n_iter=iterations)
     def get_training_classifier(self):
-        return tf.estimator.Estimator(
+        return tf.compat.v1.estimator.Estimator(
             model_fn=self.train, model_dir=self.model_dir)
     def get_prediction_classifier(self):
-        return tf.estimator.Estimator(
+        return tf.compat.v1.estimator.Estimator(
             model_fn=self.predict, model_dir=self.model_dir)
     def get_evaluation_classifier(self):
-        return tf.estimator.Estimator(
+        return tf.compat.v1.estimator.Estimator(
             model_fn=self.evaluate, model_dir=self.model_dir)
     def get_input_function(self, input_data, input_labels, batch_size, epochs, shuffle=False):
         # Train the model
-        input_fn = tf.estimator.inputs.numpy_input_fn(
+        input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(
             x={self.input_feature_tag: input_data},
             y=input_labels,
             batch_size=batch_size,
@@ -87,7 +94,7 @@ class Classifier:
             shuffle=shuffle)
         return input_fn
     def train(self, features, labels):
-        mode = tf.estimator.ModeKeys.TRAIN
+        mode = tf.compat.v1.estimator.ModeKeys.TRAIN
         if self.classifier_type == "rnn":
             output_res, predictions = self.recurrent_neural_network_model(features, mode)
         else:
@@ -95,62 +102,62 @@ class Classifier:
         # Calculate Loss (for both TRAIN and EVAL modes)
         print("Tensor Label :" + str(labels))
         print("Predictions:" + str(predictions[self.prediction_class_key]))
-        one_hot_label = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=self.output_classes)
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=output_res)
+        one_hot_label = tf.compat.v1.one_hot(indices=tf.compat.v1.cast(labels, tf.compat.v1.int32), depth=self.output_classes)
+        loss = tf.compat.v1.losses.sparse_softmax_cross_entropy(labels=labels, logits=output_res)
 
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
-        print("Loss, Global step = ", str(loss), ", ", str(tf.train.get_global_step()))
+        optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=0.001)
+        print("Loss, Global step = ", str(loss), ", ", str(tf.compat.v1.train.get_global_step()))
         train_op = optimizer.minimize(
             loss=loss,
-            global_step=tf.train.get_global_step())
-        eval_metric_ops = {"accuracy": tf.metrics.accuracy(
+            global_step=tf.compat.v1.train.get_global_step())
+        eval_metric_ops = {"accuracy": tf.compat.v1.metrics.accuracy(
             labels=labels, predictions=predictions["classes"])}
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=eval_metric_ops)
+        return tf.compat.v1.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=eval_metric_ops)
     def predict(self, features, params):
         print("Received Parameters:", str(params))
-        mode = tf.estimator.ModeKeys.PREDICT
+        mode = tf.compat.v1.estimator.ModeKeys.PREDICT
         if self.classifier_type == "rnn":
             output_res, predictions = self.recurrent_neural_network_model(features, mode)
         else:
             output_res, predictions = self.execute(features, mode)
 
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+        return tf.compat.v1.estimator.EstimatorSpec(mode=mode, predictions=predictions)
     def evaluate(self, features, labels):
-        mode = tf.estimator.ModeKeys.EVAL
+        mode = tf.compat.v1.estimator.ModeKeys.EVAL
         if self.classifier_type == "rnn":
             output_res, predictions = self.recurrent_neural_network_model(features,mode)
         else:
             output_res, predictions = self.execute(features, mode)
         # Calculate Loss (for both TRAIN and EVAL modes)
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=output_res)
+        loss = tf.compat.v1.losses.sparse_softmax_cross_entropy(labels=labels, logits=output_res)
 
         # Add evaluation metrics (for EVAL mode)
-        eval_metric_ops = {"accuracy": tf.metrics.accuracy(
+        eval_metric_ops = {"accuracy": tf.compat.v1.metrics.accuracy(
             labels=labels, predictions=predictions["classes"])}
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, predictions=predictions, eval_metric_ops=eval_metric_ops)
+        return tf.compat.v1.estimator.EstimatorSpec(mode=mode, loss=loss, predictions=predictions, eval_metric_ops=eval_metric_ops)
 
     def recurrent_neural_network_model(self, data, mode):
         lstm_cell = rnn_cell.BasicLSTMCell(self.rnn_chunk_size, state_is_tuple=True)
         print("Transposing input data to split data")
         print("Input data shape: ", str(data[self.input_feature_tag]))
-        x_rnn = tf.transpose(data[self.input_feature_tag], [1, 0, 2])
+        x_rnn = tf.compat.v1.transpose(data[self.input_feature_tag], [1, 0, 2])
         print("Transposed data shape: ", str(x_rnn))
-        x_rnn = tf.reshape(x_rnn, [-1, self.rnn_chunk_size])
+        x_rnn = tf.compat.v1.reshape(x_rnn, [-1, self.rnn_chunk_size])
         print("Reshaped data shape: ", str(x_rnn))
-        x_rnn = tf.split(x_rnn, self.rnn_chunks, 0)
+        x_rnn = tf.compat.v1.split(x_rnn, self.rnn_chunks, 0)
         print("Split data shape: ", str(x_rnn))
-        outputs, states = rnn.static_rnn(lstm_cell, x_rnn, dtype=tf.float32)
+        outputs, states = rnn.static_rnn(lstm_cell, x_rnn, dtype=tf.compat.v1.float32)
 
-        dense = tf.layers.dense(inputs=outputs[-1], units=self.dense_units, activation=self.dense_activation)
-        dense_dropout = tf.layers.dropout(inputs=dense, rate=self.dense_dropout,
-                                          training=mode == tf.estimator.ModeKeys.TRAIN)
-        output = tf.layers.dense(inputs=dense_dropout, units=self.output_classes)
+        dense = tf.compat.v1.layers.dense(inputs=outputs[-1], units=self.dense_units, activation=self.dense_activation)
+        dense_dropout = tf.compat.v1.layers.dropout(inputs=dense, rate=self.dense_dropout,
+                                          training=mode == tf.compat.v1.estimator.ModeKeys.TRAIN)
+        output = tf.compat.v1.layers.dense(inputs=dense_dropout, units=self.output_classes)
         predictions = {
             # Generate predictions (for PREDICT and EVAL mode)
-            self.prediction_class_key: tf.argmax(input=output, axis=1),
+            self.prediction_class_key: tf.compat.v1.argmax(input=output, axis=1),
             # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
             # `logging_hook`.
-            self.prediction_probability_key: tf.nn.softmax(output, name=self.prediction_probability_name)
+            self.prediction_probability_key: tf.compat.v1.nn.softmax(output, name=self.prediction_probability_name)
         }
 
         return output, predictions
@@ -159,16 +166,16 @@ class Classifier:
         print("Input feature: " + str(data[self.input_feature_tag]))
         print("Input feature:" + str(type(data[self.input_feature_tag])))
         print(data[self.input_feature_tag])
-        input_layer_output = tf.reshape(data[self.input_feature_tag], [-1, self.inp_w, self.inp_chan])
-        conv_output = tf.layers.conv1d(inputs=input_layer_output, filters=self.conv_filters, kernel_size=self.conv_kernel_width)
+        input_layer_output = tf.compat.v1.reshape(data[self.input_feature_tag], [-1, self.inp_w, self.inp_chan])
+        conv_output = tf.compat.v1.layers.conv1d(inputs=input_layer_output, filters=self.conv_filters, kernel_size=self.conv_kernel_width)
         print("Conv output shape: " + str(conv_output))
-        pool_output = tf.layers.max_pooling1d(conv_output, self.pool_size, self.pool_stride, self.pool_padding)
+        pool_output = tf.compat.v1.layers.max_pooling1d(conv_output, self.pool_size, self.pool_stride, self.pool_padding)
         print("Pool shape: " + str(pool_output))
-        flattened_pool = tf.reshape(pool_output, [-1, self.conv_filters*self.pool_output_size])
+        flattened_pool = tf.compat.v1.reshape(pool_output, [-1, self.conv_filters*self.pool_output_size])
         print("Flattened pool: " + str(flattened_pool))
-        dense_output = tf.layers.dense(inputs=flattened_pool, units=self.dense_units, activation=self.dense_activation)
-        dense_dropout = tf.layers.dropout(inputs=dense_output, rate=self.dense_dropout, training=mode == tf.estimator.ModeKeys.TRAIN)
-        final_output = tf.layers.dense(inputs=dense_dropout, units=self.output_classes)
+        dense_output = tf.compat.v1.layers.dense(inputs=flattened_pool, units=self.dense_units, activation=self.dense_activation)
+        dense_dropout = tf.compat.v1.layers.dropout(inputs=dense_output, rate=self.dense_dropout, training=mode == tf.compat.v1.estimator.ModeKeys.TRAIN)
+        final_output = tf.compat.v1.layers.dense(inputs=dense_dropout, units=self.output_classes)
         print("Final Output: " + str(final_output))
         outputs.append(input_layer_output)
         outputs.append(conv_output)
@@ -177,10 +184,10 @@ class Classifier:
         outputs.append(final_output)
         predictions = {
             # Generate predictions (for PREDICT and EVAL mode)
-            self.prediction_class_key: tf.argmax(input=final_output, axis=1),
+            self.prediction_class_key: tf.compat.v1.argmax(input=final_output, axis=1),
             # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
             # `logging_hook`.
-            self.prediction_probability_key: tf.nn.softmax(final_output, name=self.prediction_probability_name)
+            self.prediction_probability_key: tf.compat.v1.nn.softmax(final_output, name=self.prediction_probability_name)
         }
         return final_output, predictions
 
@@ -241,7 +248,7 @@ class Classifier:
         input_data_urls, input_data_labels = zip(*c)
         print("Shuffled data labels: " + str(input_data_labels))
         input_data_np = np.empty((0, self.inp_w, self.inp_chan), dtype=np.float32)
-        input_label_tensor = tf.one_hot(input_data_labels, self.output_classes)
+        input_label_tensor = tf.compat.v1.one_hot(input_data_labels, self.output_classes)
         for i in range(len(input_data_urls)):
             url = input_data_urls[i]
             data = np.load(url, allow_pickle=True)
@@ -265,8 +272,8 @@ class Classifier:
                     (input_data_np, np.reshape(data[:-diff, :], (1, input_data_np.shape[1], data.shape[1]))))
         print("Numpy input data shape: " + str(input_data_np.shape) + ", type: " + str(input_data_np.dtype))
         print(input_label_tensor)
-        # init = tf.global_variables_initializer()
-        # with tf.Session() as sess:
+        # init = tf.compat.v1.global_variables_initializer()
+        # with tf.compat.v1.Session() as sess:
         #   sess.run(init)
         label_np = np.asarray(input_data_labels)
         print("Label Shape: " + str(label_np.shape))
@@ -349,7 +356,7 @@ class Classifier:
     def demo_prediction(self, evaluate=False, max_size=2):
         if not evaluate:
             fnames = ["data_talk1", "data_talk2", "data_sound", "data_talk3"]
-            file = "D:\\thesis\\ConvNet\\MyNet\\temp\\dataset\\test\\"
+            file = os.path.join(os.getcwd(), "dataset", "test")
             data = []
             labels = []
             for i in range(len(fnames)):

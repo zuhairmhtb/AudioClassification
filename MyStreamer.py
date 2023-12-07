@@ -1,4 +1,4 @@
-import math, wave, time, queue, struct, sys, json
+import math, wave, time, queue, struct, sys, json, os
 from win32api import GetSystemMetrics
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import QApplication, QPushButton, QDialog,\
 from scipy import signal
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-from MyNet.temp.MyManager import StreamManager
-from MyNet.temp.Classifier import Classifier
+from MyManager import StreamManager
+from Classifier import Classifier
 
 class AudioStreamer:
     def __init__(self, audio_plotter, audio_blocksize, sampling_rate, channels, record_duration, update_duration_function, classification_type, classification_update_function, update_processing_fn):
@@ -99,7 +99,7 @@ class AudioStreamer:
 class StreamController(QDialog):
     def __init__(self):
         super().__init__()
-        self.BASE_DIR = "D:\\thesis\\ConvNet\\MyNet\\temp\\"
+        self.BASE_DIR = os.getcwd()
         data = self.get_information()
         self.prediction_type = "talk"
         self.sampling_rate = int(data["sampling_rate"])
@@ -177,7 +177,7 @@ class StreamController(QDialog):
         self.root_row_classification.setLayout(self.root_row_classification_layout)
         self.initWindow()
     def get_information(self):
-        file_path = self.BASE_DIR + 'audio_information.json'
+        file_path = os.path.join(self.BASE_DIR, 'audio_information.json')
         with open(file_path) as f:
             data = json.load(f)
         return data
@@ -253,7 +253,7 @@ class StreamController(QDialog):
             self.start_stream_button.setDisabled(True)
             #self.save_recorded_button.setDisabled(True)
             self.log('Starting Audio Streamer...')
-            self.audio_streamer.record_dir = self.BASE_DIR + "dataset\\predicted\\" + self.record_dir_input.text() + '\\'
+            self.audio_streamer.record_dir = os.path.join(self.BASE_DIR, "dataset", "predicted", self.record_dir_input.text())
             self.audio_streamer_thread = Thread(target=self.audio_streamer.stream)
             self.audio_streamer_thread.setDaemon(True)
             self.audio_streamer_thread.start()
